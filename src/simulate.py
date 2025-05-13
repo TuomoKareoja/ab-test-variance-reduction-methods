@@ -25,7 +25,7 @@ def simulate_experiment(seed, has_covariate, has_selection_bias, params):
 
     # Common Parameters
     n = params["n"]
-    effect = params["true_effect"]
+    true_effect = params["true_effect"]
     target_pre_experiment_mean = params["target_pre_experiment_mean"]
     target_std = params["target_std"]
 
@@ -55,7 +55,7 @@ def simulate_experiment(seed, has_covariate, has_selection_bias, params):
 
     # Generate the post-only measurements
     post_experiment = np.random.normal(
-        pre_experiment + effect * is_treatment + covariate * covariate_effect,
+        pre_experiment + true_effect * is_treatment + covariate * covariate_effect,
         target_std,
         size=n,
     )
@@ -66,6 +66,7 @@ def simulate_experiment(seed, has_covariate, has_selection_bias, params):
         "post_experiment": post_experiment,
         "change": post_experiment - pre_experiment,
         "is_treatment": is_treatment,
+        "true_effect": true_effect,
     }
 
     if has_covariate:

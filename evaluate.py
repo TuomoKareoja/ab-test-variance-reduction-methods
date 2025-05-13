@@ -96,6 +96,7 @@ for config in scenario_config:
             result = estimation_method(filtered_data)
             result["experiment_number"] = experiment_number
             result["method"] = estimation_method.__name__
+            result["true_effect"] = filtered_data["true_effect"].mean()
 
             results.append(result)
 
