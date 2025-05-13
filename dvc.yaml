@@ -1,0 +1,19 @@
+stages:
+
+  simulate_experiments:
+    cmd: python simulate.py
+    deps:
+      - params.yml
+      - simulate.py
+      - src/simulate.py
+    outs:
+      - experiments/
+
+  evaluate_methods:
+    cmd: python evaluate.py
+    deps:
+      - evaluate.py
+      - src/evaluate.py
+      - experiments/
+    outs:
+      - results/

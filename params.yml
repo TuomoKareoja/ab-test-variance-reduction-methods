@@ -1,0 +1,11 @@
+n: 100
+experiments: 1000
+true_effect: 1
+target_pre_experiment_mean: 10
+target_std: 0.1
+covariate_min: -1
+covariate_max: 1
+# how much the post-experiment value is shifted by each unit of the covariate
+covariate_effect: 0.5
+# how much more likely in % terms it is for each unit of the covariate to be in the treatment group
+covariate_selection_bias: .10 # 10 % more likely

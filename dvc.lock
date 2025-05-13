@@ -1,0 +1,45 @@
+schema: '2.0'
+stages:
+  simulate_experiments:
+    cmd: python simulate.py
+    deps:
+    - path: params.yml
+      hash: md5
+      md5: 441261cf03383488fd5c1388f3591108
+      size: 371
+    - path: simulate.py
+      hash: md5
+      md5: 9850b360c06f2f9e994963b40adcb1f9
+      size: 2021
+    - path: src/simulate.py
+      hash: md5
+      md5: c7fd3ee4b099459b4283af8c9c50b8c2
+      size: 2362
+    outs:
+    - path: experiments/
+      hash: md5
+      md5: b806d29fd4ee0f4b690fef3c72ec4d3f.dir
+      size: 11216364
+      nfiles: 3
+  evaluate_methods:
+    cmd: python evaluate.py
+    deps:
+    - path: evaluate.py
+      hash: md5
+      md5: 53942bb850950540cec7aad7306d3379
+      size: 2724
+    - path: experiments/
+      hash: md5
+      md5: b806d29fd4ee0f4b690fef3c72ec4d3f.dir
+      size: 11216364
+      nfiles: 3
+    - path: src/evaluate.py
+      hash: md5
+      md5: 5cedbecff1f1cc5c2d105cdda081b139
+      size: 3547
+    outs:
+    - path: results/
+      hash: md5
+      md5: f501a49e9777c5b48826dc47a408c7ee.dir
+      size: 239195
+      nfiles: 2

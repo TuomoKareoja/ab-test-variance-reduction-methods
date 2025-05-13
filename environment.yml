@@ -1,0 +1,39 @@
+name: ab-test-variance-reduction-methods
+channels:
+  - conda-forge
+dependencies:
+  - python
+
+  # Core numerical stack
+  - numpy
+  - pandas
+  - scipy
+  - statsmodels
+  - scikit-learn
+  - pyarrow  # parquet I/O for results
+
+  # Pipelines
+  - dvc
+  - tqdm
+
+  # Causal / ML extras
+  - dowhy
+
+  # Performance
+  - dask  # optional parallel runs
+  - joblib  # lightweight parallelism alternative
+
+  # Visualization & app
+  - matplotlib
+  - seaborn
+
+  # app
+  - streamlit
+
+  # Notebook / dev UX
+  - jupyter
+  - ipykernel
+
+  # Quality & testing
+  - pytest
+  - ruff
