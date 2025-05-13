@@ -34,25 +34,33 @@ different experiments and see how the methods fare against each other.
 
 ```text
 .
+├── .dvc/                # DVC config
 ├── app/                 # Streamlit UI (main.py, components/)
-├── engine/              # Simulation runner & helpers
-├── estimators/          # t‑test, CUPED, DiD, etc.
-├── results/             # Parquet simulations & summary CSVs (git‑ignored)
-├── scenarios/           # Synthetic data generators S1–S4
-├── src/                 # Helper functions
+├── experiments/         # Simulated experiment data
 ├── notebooks/
 │   ├── S0_introduction_to_the_methods.ipynb
 │   ├── S1_only_post_experiment_measurement.ipynb
 │   ├── S2_pre_and_post_measurements.ipynb
 │   ├── S3_covariates.ipynb
 │   └── S2_selection_bias_covariate.ipynb
+├── plots/               # Plots of the bias and variance of different methods in simulated experiments
+├── results/             # Point estimates, confidence intervals and p-values of different methods per experiment
+├── src/                 # Helper functions
 ├── tests/               # Pytest unit & property tests
+├── .dvcignore           # What files should DVC ignore
+├── .gitignore
+├── dvc.lock             # Used by DVC to check which pipeline steps need to be rerun when making changes
+├── dvc.yaml             # DVC processing pipeline definition
 ├── environment.yml      # Conda environment definition
-├── params.yml           # Parameters that define the simulated experiments
-└── README.md
+├── evaluate.py          # Apply statistic methods to simulated experiments
+├── LICENSE
+├── params.yml           # DVC parameter file defining the experiments
+├── plot.py              # Plotting the bias and variance of the estimates from different methods
+├── README.md
+└── simulate.py          # Create simulated experiments
 ```
 
-> **Tip:** heavy artifacts (results/) are excluded via `.gitignore`; use `dvc repro` to regenerate.
+> **Note** heavy artifacts (e.g. results/) are excluded via `.gitignore`; use `dvc repro` to regenerate.
 
 ---
 
@@ -87,11 +95,3 @@ dvc repro
 ```
 
 This runs all the simulations and applies the methods for each of them. Outputs raw simulation data and estimates to `results` folder.
-
-## 4 ▕ Reproduce all paper‑quality figures
-
-```bash
-$ make reproduce   # heavy: ~30 min on laptop, runs 10 k reps & saves fig/
-```
-
-Figures and aggregated CSVs end up in `fig/` and `results/summary/`.
