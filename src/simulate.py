@@ -51,7 +51,7 @@ def simulate_experiment(seed, has_covariate, has_selection_bias, params):
             # Calculate selection impact
             selection_impact = covariate * covariate_selection_bias
 
-    is_treatment = np.where(np.random.rand(n) > 0.5 + selection_impact, 1, 0)
+    is_treatment = np.where(np.random.rand(n) > 0.5 - selection_impact, 1, 0)
 
     # Generate the post-only measurements
     post_experiment = np.random.normal(
