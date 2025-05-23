@@ -8,4 +8,4 @@ covariate_max: 1
 # how much the post-experiment value is shifted by each unit of the covariate
 covariate_effect: 0.5
 # how much more likely in % terms it is for each unit of the covariate to be in the treatment group
-covariate_selection_bias: .10 # 10 % more likely
+covariate_selection_bias: .20 # 20 % more likely
