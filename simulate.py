@@ -4,10 +4,11 @@ import os
 import pandas as pd
 import logging
 import dvc.api
-from src.simulate import simulate_experiment
+from src.simulate import simulate_experiments_batch
 from tqdm import tqdm
 import multiprocessing
 import concurrent.futures
+import numpy as np
 
 # %%
 
@@ -54,15 +55,9 @@ if not os.path.exists("experiments"):
 # %%
 
 
-def run_simulation(experiment_number, config, params):
-    df = simulate_experiment(
-        seed=experiment_number,
-        has_covariate=config["has_covariate"],
-        has_selection_bias=config["has_selection_bias"],
-        params=params,
-    )
-    df["experiment_number"] = experiment_number
-    return df
+def run_simulation_batch(experiment_numbers, config, params):
+    """Run a batch of simulations and return structured array."""
+    return simulate_experiments_batch(experiment_numbers, config, params)
 
 
 # %%
@@ -70,24 +65,39 @@ def run_simulation(experiment_number, config, params):
 # Leave one CPU core free for other processes
 num_workers = max(1, multiprocessing.cpu_count() - 1)
 
-for config in simulation_configurations:
-    simulations = []
+# Calculate optimal batch size based on number of workers
+batch_size = max(1, experiments // (num_workers * 4))  # 4 batches per worker
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+for config in simulation_configurations:
+    # Create batches of experiment numbers
+    experiment_batches = []
+    for i in range(0, experiments, batch_size):
+        batch = list(range(i, min(i + batch_size, experiments)))
+        experiment_batches.append(batch)
+
+    # Pre-allocate list for results
+    all_results = []
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
         futures = []
         with tqdm(
-            total=experiments, desc=f"Simulating {config['scenario_name']}"
+            total=len(experiment_batches) * batch_size,
+            desc=f"Simulating {config['scenario_name']}",
         ) as pbar:
-            for experiment_number in range(experiments):
-                future = executor.submit(
-                    run_simulation, experiment_number, config, params
-                )
+            for batch in experiment_batches:
+                future = executor.submit(run_simulation_batch, batch, config, params)
                 futures.append(future)
-            for future in concurrent.futures.as_completed(futures):
-                simulations.append(future.result())
-                pbar.update(1)
 
-    simulations_df = pd.concat(simulations, ignore_index=True)
+            for future in concurrent.futures.as_completed(futures):
+                result_array = future.result()
+                all_results.append(result_array)
+                pbar.update(batch_size)
+
+    # Concatenate all structured arrays
+    combined_array = np.concatenate(all_results)
+
+    # Convert to DataFrame only once at the end
+    simulations_df = pd.DataFrame(combined_array)
 
     output_path = os.path.join("experiments", f'{config["scenario_name"]}.parquet')
     simulations_df.to_parquet(output_path)
