@@ -6,6 +6,7 @@ import logging
 import dvc.api
 from src.simulate import simulate_experiment
 from tqdm import tqdm
+import concurrent.futures
 
 # %%
 
@@ -45,32 +46,45 @@ simulation_configurations = [
 # %%
 
 # Create experiments folder if it does not exist
-# We need to do this as DVC removes the folder when we run dvc repro
-# because we have set the whole folder as a dvc output
 if not os.path.exists("experiments"):
     os.makedirs("experiments")
 
-for config in simulation_configurations:
 
+# %%
+
+
+def run_simulation(experiment_number, config, params):
+    df = simulate_experiment(
+        seed=experiment_number,
+        has_covariate=config["has_covariate"],
+        has_selection_bias=config["has_selection_bias"],
+        params=params,
+    )
+    df["experiment_number"] = experiment_number
+    return df
+
+
+# %%
+
+for config in simulation_configurations:
     simulations = []
 
-    # Simulate the experiment with progress bar
-    with tqdm(total=experiments, desc=f"Simulating {config['scenario_name']}") as pbar:
-        for experiment_number in range(experiments):
-            df = simulate_experiment(
-                seed=experiment_number,
-                has_covariate=config["has_covariate"],
-                has_selection_bias=config["has_selection_bias"],
-                params=params,
-            )
-            df["experiment_number"] = experiment_number
-
-            simulations.append(df)
-            pbar.update(1)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        with tqdm(
+            total=experiments, desc=f"Simulating {config['scenario_name']}"
+        ) as pbar:
+            for experiment_number in range(experiments):
+                future = executor.submit(
+                    run_simulation, experiment_number, config, params
+                )
+                futures.append(future)
+            for future in concurrent.futures.as_completed(futures):
+                simulations.append(future.result())
+                pbar.update(1)
 
     simulations_df = pd.concat(simulations, ignore_index=True)
 
-    # Save the experiment data to a parquet file
     output_path = os.path.join("experiments", f'{config["scenario_name"]}.parquet')
     simulations_df.to_parquet(output_path)
 
