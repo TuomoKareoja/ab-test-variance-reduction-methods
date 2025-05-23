@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 import statsmodels.formula.api as smf
 
@@ -29,22 +28,6 @@ def extract_treatment_results(model):
     }
 
 
-def extract_did_results(model):
-    """
-    Extract results for difference-in-differences interaction term.
-    """
-    p_value = model.pvalues["time:is_treatment"]
-    estimate = model.params["time:is_treatment"]
-    ci = model.conf_int().iloc[3].values
-
-    return {
-        "p_value": p_value,
-        "estimate": estimate,
-        "ci_lower": ci[0],
-        "ci_upper": ci[1],
-    }
-
-
 def t_test(df, covariate=False):
     """
     Perform a t-test on the post-experiment data with or without a covariate.
@@ -54,9 +37,9 @@ def t_test(df, covariate=False):
     return extract_treatment_results(model)
 
 
-def t_test_on_change(df, covariate=False):
+def diff_in_diff(df, covariate=False):
     """
-    Perform a t-test on the change in post-experiment data with or without a covariate.
+    Perform a difference-in-differences t-test on the post-experiment data.
     """
     formula = build_formula("change ~ is_treatment", covariate)
     model = smf.ols(formula, data=df).fit()
@@ -114,35 +97,6 @@ def cuped(df, covariate=False):
     ).fit()
 
     return extract_treatment_results(model)
-
-
-def diff_in_diff(df, covariate=False):
-    """
-    Perform a difference-in-differences t-test on the post-experiment data.
-    """
-    n = len(df)
-
-    df_long = pd.DataFrame(
-        {
-            "participant": np.tile(df.index, 2),
-            "time": np.repeat([0, 1], n),
-            "target": np.concatenate([df["pre_experiment"], df["post_experiment"]]),
-            "is_treatment": np.tile(df["is_treatment"], 2),
-        }
-    )
-
-    formula = build_formula("target ~ time * is_treatment", covariate)
-
-    if covariate:
-        df_long["covariate"] = np.tile(df["covariate"], 2)
-
-    # NOTE: Adjusting the model to take into account that the observations from the
-    # same participant are not independent (this reduces the standard errors)
-    model = smf.ols(formula, data=df_long).fit(
-        cov_type="cluster", cov_kwds={"groups": df_long["participant"]}
-    )
-
-    return extract_did_results(model)
 
 
 def evaluate_experiments_batch(grouped_data, experiment_numbers, method_configs):

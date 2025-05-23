@@ -9,7 +9,6 @@ import concurrent.futures
 import multiprocessing
 from src.evaluate import (
     t_test,
-    t_test_on_change,
     autoregression,
     cuped,
     diff_in_diff,
@@ -49,7 +48,6 @@ scenario_config = [
         "experiments": df_no_covariate["experiment_number"].max() + 1,
         "methods": [
             {"func": t_test, "use_covariate": False},
-            {"func": t_test_on_change, "use_covariate": False},
             {"func": autoregression, "use_covariate": False},
             {"func": diff_in_diff, "use_covariate": False},
             {"func": cuped, "use_covariate": False},
@@ -63,8 +61,6 @@ scenario_config = [
         "methods": [
             {"func": t_test, "use_covariate": False},
             {"func": t_test, "use_covariate": True},
-            {"func": t_test_on_change, "use_covariate": False},
-            {"func": t_test_on_change, "use_covariate": True},
             {"func": autoregression, "use_covariate": False},
             {"func": autoregression, "use_covariate": True},
             {"func": diff_in_diff, "use_covariate": False},
@@ -81,8 +77,6 @@ scenario_config = [
         "methods": [
             {"func": t_test, "use_covariate": False},
             {"func": t_test, "use_covariate": True},
-            {"func": t_test_on_change, "use_covariate": False},
-            {"func": t_test_on_change, "use_covariate": True},
             {"func": autoregression, "use_covariate": False},
             {"func": autoregression, "use_covariate": True},
             {"func": diff_in_diff, "use_covariate": False},
