@@ -2,9 +2,6 @@
 
 import os
 import pandas as pd
-import numpy as np
-import dvc.api
-from tqdm import tqdm
 
 import logging
 from tqdm import trange
@@ -48,7 +45,7 @@ scenario_config = [
         "data": df_no_covariate,
         "experiments": df_no_covariate["experiment_number"].max() + 1,
         "methods": [
-            t_test,
+            {"func": t_test, "use_covariate": False},
         ],
         "output_path": os.path.join("results", "post_only.parquet"),
     },
@@ -57,11 +54,11 @@ scenario_config = [
         "data": df_no_covariate,
         "experiments": df_no_covariate["experiment_number"].max() + 1,
         "methods": [
-            t_test,
-            t_test_on_change,
-            autoregression,
-            diff_in_diff,
-            cuped,
+            {"func": t_test, "use_covariate": False},
+            {"func": t_test_on_change, "use_covariate": False},
+            {"func": autoregression, "use_covariate": False},
+            {"func": diff_in_diff, "use_covariate": False},
+            {"func": cuped, "use_covariate": False},
         ],
         "output_path": os.path.join("results", "pre_and_post.parquet"),
     },
@@ -70,11 +67,16 @@ scenario_config = [
         "data": df_covariate,
         "experiments": df_covariate["experiment_number"].max() + 1,
         "methods": [
-            t_test,
-            t_test_on_change,
-            autoregression,
-            diff_in_diff,
-            cuped,
+            {"func": t_test, "use_covariate": False},
+            {"func": t_test, "use_covariate": True},
+            {"func": t_test_on_change, "use_covariate": False},
+            {"func": t_test_on_change, "use_covariate": True},
+            {"func": autoregression, "use_covariate": False},
+            {"func": autoregression, "use_covariate": True},
+            {"func": diff_in_diff, "use_covariate": False},
+            {"func": diff_in_diff, "use_covariate": True},
+            {"func": cuped, "use_covariate": False},
+            {"func": cuped, "use_covariate": True},
         ],
         "output_path": os.path.join("results", "covariate.parquet"),
     },
@@ -83,11 +85,16 @@ scenario_config = [
         "data": df_selection_bias,
         "experiments": df_selection_bias["experiment_number"].max() + 1,
         "methods": [
-            t_test,
-            t_test_on_change,
-            autoregression,
-            diff_in_diff,
-            cuped,
+            {"func": t_test, "use_covariate": False},
+            {"func": t_test, "use_covariate": True},
+            {"func": t_test_on_change, "use_covariate": False},
+            {"func": t_test_on_change, "use_covariate": True},
+            {"func": autoregression, "use_covariate": False},
+            {"func": autoregression, "use_covariate": True},
+            {"func": diff_in_diff, "use_covariate": False},
+            {"func": diff_in_diff, "use_covariate": True},
+            {"func": cuped, "use_covariate": False},
+            {"func": cuped, "use_covariate": True},
         ],
         "output_path": os.path.join("results", "selection_bias.parquet"),
     },
@@ -108,20 +115,34 @@ for config in scenario_config:
     results = []
 
     # Run each method and save the results to disk
-    for estimation_method in config["methods"]:
+    for method_config in config["methods"]:
+        estimation_method = method_config["func"]
+        use_covariate = method_config["use_covariate"]
 
-        for experiment_number in trange(
-            config["experiments"], desc=estimation_method.__name__
-        ):
+        # Create method name with covariate suffix if applicable
+        method_name = estimation_method.__name__
+        if use_covariate:
+            method_name += "_covariate"
+
+        logger.info(f"Running method: {method_name}")
+
+        for experiment_number in trange(config["experiments"], desc=method_name):
             # Filter the data for the current experiment number
             filtered_data = config["data"].loc[
                 config["data"]["experiment_number"] == experiment_number
             ]
 
+            # Skip if trying to use covariate but the dataset doesn't have it
+            if use_covariate and "covariate" not in filtered_data.columns:
+                logger.warning(
+                    f"Cannot use covariate with {config['scenario_name']} as it doesn't contain covariate data"
+                )
+                break
+
             # Run the method on the filtered data
-            result = estimation_method(filtered_data)
+            result = estimation_method(filtered_data, covariate=use_covariate)
             result["experiment_number"] = experiment_number
-            result["method"] = estimation_method.__name__
+            result["method"] = method_name
             result["true_effect"] = filtered_data["true_effect"].mean()
 
             results.append(result)
@@ -129,6 +150,8 @@ for config in scenario_config:
     # create results df from the result dictionaries
     results_df = pd.DataFrame(results)
 
+    # Save the results
     results_df.to_parquet(config["output_path"])
+    logger.info(f"Saved results to {config['output_path']}")
 
 # %%

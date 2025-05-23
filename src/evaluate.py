@@ -143,7 +143,9 @@ def diff_in_diff(df, covariate=False):
 
     if covariate:
         # Add the covariate to the long format dataframe
-        df_long["covariate"] = np.repeat(df["covariate"], 2)
+        df_long["covariate"] = np.repeat(
+            df.reset_index(drop=True)["covariate"].values, 2
+        )
 
         # Fit the model with the covariate
         formula += " + covariate"
