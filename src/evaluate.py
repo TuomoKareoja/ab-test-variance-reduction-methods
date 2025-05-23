@@ -117,40 +117,21 @@ def diff_in_diff(df, covariate=False):
     """
     Perform a difference-in-differences t-test on the post-experiment data.
     """
-
-    # change the data to long format where for each observation we have two rows:
-    # one for pre-experiment and one for post-experiment
-    df_long = pd.concat(
-        [
-            pd.DataFrame(
-                {
-                    "participant": df.index,
-                    "time": 0,
-                    "target": df["pre_experiment"],
-                    "is_treatment": df["is_treatment"],
-                }
-            ),
-            pd.DataFrame(
-                {
-                    "participant": df.index,
-                    "time": 1,
-                    "target": df["post_experiment"],
-                    "is_treatment": df["is_treatment"],
-                }
-            ),
-        ],
-        ignore_index=True,
-    )
+    n = len(df)
+    
+    # More efficient long format conversion using vectorized operations
+    df_long = pd.DataFrame({
+        "participant": np.tile(df.index, 2),
+        "time": np.repeat([0, 1], n),
+        "target": np.concatenate([df["pre_experiment"], df["post_experiment"]]),
+        "is_treatment": np.tile(df["is_treatment"], 2)
+    })
 
     formula = "target ~ time * is_treatment"
 
     if covariate:
-        # Add the covariate to the long format dataframe
-        df_long["covariate"] = np.repeat(
-            df.reset_index(drop=True)["covariate"].values, 2
-        )
-
-        # Fit the model with the covariate
+        # More efficient covariate addition
+        df_long["covariate"] = np.tile(df["covariate"], 2)
         formula += " + covariate"
 
     # NOTE: Adjusting the model to take into account that the observations from the
@@ -167,3 +148,36 @@ def diff_in_diff(df, covariate=False):
         "ci_lower": ci[0],
         "ci_upper": ci[1],
     }
+
+
+def evaluate_experiments_batch(grouped_data, experiment_numbers, method_configs):
+    """
+    Evaluate multiple experiments in a batch for better performance.
+    """
+    results = []
+    
+    for exp_num in experiment_numbers:
+        if exp_num not in grouped_data.groups:
+            continue
+            
+        exp_data = grouped_data.get_group(exp_num)
+        
+        for method_config in method_configs:
+            estimation_method = method_config["func"]
+            use_covariate = method_config["use_covariate"]
+            
+            method_name = estimation_method.__name__
+            if use_covariate:
+                method_name += "_covariate"
+            
+            # Skip if trying to use covariate but dataset doesn't have it
+            if use_covariate and "covariate" not in exp_data.columns:
+                continue
+            
+            result = estimation_method(exp_data, covariate=use_covariate)
+            result["experiment_number"] = exp_num
+            result["method"] = method_name
+            result["true_effect"] = exp_data["true_effect"].iloc[0]
+            results.append(result)
+    
+    return results

@@ -4,13 +4,16 @@ import os
 import pandas as pd
 
 import logging
-from tqdm import trange
+from tqdm import tqdm
+import concurrent.futures
+import multiprocessing
 from src.evaluate import (
     t_test,
     t_test_on_change,
     autoregression,
     cuped,
     diff_in_diff,
+    evaluate_experiments_batch,
 )
 
 # import the analytical packages needed
@@ -94,55 +97,73 @@ scenario_config = [
 # %%
 
 # Create results folder if it does not exist
-# We need to do this as DVC removes the folder when we run dvc repro
-# because we have set the whole folder as a dvc output
 if not os.path.exists("results"):
     os.makedirs("results")
 
-for config in scenario_config:
+# %%
 
+
+def run_experiments_batch(args):
+    """Process a batch of experiments for better performance."""
+    grouped_data, experiment_numbers, method_configs = args
+    return evaluate_experiments_batch(grouped_data, experiment_numbers, method_configs)
+
+
+# %%
+
+# Leave one CPU core free for other processes
+max_workers = max(1, multiprocessing.cpu_count() - 1)
+
+
+def run_scenario(config):
     print(f"Running scenario: {config['scenario_name']}")
+
+    # Pre-group data once for efficient access
+    grouped_data = config["data"].groupby("experiment_number")
+
+    # Calculate optimal batch size
+    batch_size = max(1, config["experiments"] // (max_workers * 4))
+
+    # Create batches of experiment numbers
+    experiment_batches = []
+    for i in range(0, config["experiments"], batch_size):
+        batch = list(range(i, min(i + batch_size, config["experiments"])))
+        experiment_batches.append(batch)
 
     results = []
 
-    # Run each method and save the results to disk
-    for method_config in config["methods"]:
-        estimation_method = method_config["func"]
-        use_covariate = method_config["use_covariate"]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
+        for batch in experiment_batches:
+            future = executor.submit(
+                run_experiments_batch, (grouped_data, batch, config["methods"])
+            )
+            futures.append(future)
 
-        # Create method name with covariate suffix if applicable
-        method_name = estimation_method.__name__
-        if use_covariate:
-            method_name += "_covariate"
+        for result in concurrent.futures.as_completed(futures):
+            batch_results = result.result()
+            results.extend(batch_results)
 
-        logger.info(f"Running method: {method_name}")
-
-        for experiment_number in trange(config["experiments"], desc=method_name):
-            # Filter the data for the current experiment number
-            filtered_data = config["data"].loc[
-                config["data"]["experiment_number"] == experiment_number
-            ]
-
-            # Skip if trying to use covariate but the dataset doesn't have it
-            if use_covariate and "covariate" not in filtered_data.columns:
-                logger.warning(
-                    f"Cannot use covariate with {config['scenario_name']} as it doesn't contain covariate data"
-                )
-                break
-
-            # Run the method on the filtered data
-            result = estimation_method(filtered_data, covariate=use_covariate)
-            result["experiment_number"] = experiment_number
-            result["method"] = method_name
-            result["true_effect"] = filtered_data["true_effect"].mean()
-
-            results.append(result)
-
-    # create results df from the result dictionaries
     results_df = pd.DataFrame(results)
-
-    # Save the results
     results_df.to_parquet(config["output_path"])
     logger.info(f"Saved results to {config['output_path']}")
+
+
+# %%
+
+# Run scenarios in parallel for better performance
+with concurrent.futures.ProcessPoolExecutor(
+    max_workers=min(3, max_workers)
+) as executor:
+    scenario_futures = [
+        executor.submit(run_scenario, config) for config in scenario_config
+    ]
+
+    for future in tqdm(
+        concurrent.futures.as_completed(scenario_futures),
+        total=len(scenario_futures),
+        desc="Overall progress",
+    ):
+        future.result()  # Wait for completion
 
 # %%
