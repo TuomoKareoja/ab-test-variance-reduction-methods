@@ -41,15 +41,6 @@ df_selection_bias = pd.read_parquet(
 # define which methods to run on each dataset
 scenario_config = [
     {
-        "scenario_name": "post_only",
-        "data": df_no_covariate,
-        "experiments": df_no_covariate["experiment_number"].max() + 1,
-        "methods": [
-            {"func": t_test, "use_covariate": False},
-        ],
-        "output_path": os.path.join("results", "post_only.parquet"),
-    },
-    {
         "scenario_name": "pre_and_post",
         "data": df_no_covariate,
         "experiments": df_no_covariate["experiment_number"].max() + 1,
