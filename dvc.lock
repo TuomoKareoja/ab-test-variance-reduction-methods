@@ -5,44 +5,44 @@ stages:
     deps:
     - path: params.yml
       hash: md5
-      md5: 441261cf03383488fd5c1388f3591108
+      md5: 431fa0d2a22414af2c233e3b94d429f0
       size: 371
     - path: simulate.py
       hash: md5
-      md5: 9850b360c06f2f9e994963b40adcb1f9
-      size: 2021
+      md5: 26679382938084441cc9584bbae0706b
+      size: 2371
     - path: src/simulate.py
       hash: md5
-      md5: fd99141056ac218ea7206dd94fdbe205
+      md5: 9d319ef44eeb0fc9f86eb4f55fe2df39
       size: 2408
     outs:
     - path: experiments/
       hash: md5
-      md5: 007ce32f781ea559d3053eaa9edec27a.dir
-      size: 11218165
+      md5: 6227db1054edc923952eecd393f58fbc.dir
+      size: 11218211
       nfiles: 3
   evaluate_methods:
     cmd: python evaluate.py
     deps:
     - path: evaluate.py
       hash: md5
-      md5: 4a0fc0f6822d4420a3a2e90f5948861c
-      size: 5358
+      md5: 7b8b1e8b34141075c4dda5d9c85a2a33
+      size: 5048
     - path: experiments/
       hash: md5
-      md5: 007ce32f781ea559d3053eaa9edec27a.dir
-      size: 11218165
+      md5: 688387133fb9f6b9b956e8d472d1e19c.dir
+      size: 11218134
       nfiles: 3
     - path: src/evaluate.py
       hash: md5
-      md5: fc91ace4e3c6b9a533536e842acb5659
-      size: 4886
+      md5: 9f5447944211d5258dff387ae84da205
+      size: 4916
     outs:
     - path: results/
       hash: md5
-      md5: 29d0da0f69f5cb4a9e9aead21752b6df.dir
-      size: 1042851
-      nfiles: 4
+      md5: 6309646cfec5711fe4b9aae4191b647a.dir
+      size: 995558
+      nfiles: 3
   generate_plots:
     cmd: python plot.py
     deps:
@@ -52,12 +52,12 @@ stages:
       size: 6573
     - path: results/
       hash: md5
-      md5: 29d0da0f69f5cb4a9e9aead21752b6df.dir
-      size: 1042851
-      nfiles: 4
+      md5: 6309646cfec5711fe4b9aae4191b647a.dir
+      size: 995558
+      nfiles: 3
     outs:
     - path: plots/
       hash: md5
-      md5: 167dfef1b0696cc1c4b3b0cfff39138b.dir
-      size: 1949157
-      nfiles: 6
+      md5: efb1e13e83b1ed7829be72d0eef09fdf.dir
+      size: 1805119
+      nfiles: 5

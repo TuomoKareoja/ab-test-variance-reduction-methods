@@ -6,6 +6,7 @@ import logging
 import dvc.api
 from src.simulate import simulate_experiment
 from tqdm import tqdm
+import multiprocessing
 import concurrent.futures
 
 # %%
@@ -66,10 +67,13 @@ def run_simulation(experiment_number, config, params):
 
 # %%
 
+# Leave one CPU core free for other processes
+num_workers = max(1, multiprocessing.cpu_count() - 1)
+
 for config in simulation_configurations:
     simulations = []
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
         futures = []
         with tqdm(
             total=experiments, desc=f"Simulating {config['scenario_name']}"
