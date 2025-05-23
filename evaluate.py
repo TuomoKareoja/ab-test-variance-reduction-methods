@@ -152,9 +152,7 @@ def run_scenario(config):
 # %%
 
 # Run scenarios in parallel for better performance
-with concurrent.futures.ProcessPoolExecutor(
-    max_workers=min(3, max_workers)
-) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
     scenario_futures = [
         executor.submit(run_scenario, config) for config in scenario_config
     ]
