@@ -48,8 +48,8 @@ stages:
     deps:
     - path: plot.py
       hash: md5
-      md5: 087157b7c500817a7fdf148f615baede
-      size: 10829
+      md5: c8359cd70a6d4332fe51e5f81aca0a5e
+      size: 6573
     - path: results/
       hash: md5
       md5: e101f26455765c181365400ae66f494f.dir
@@ -58,6 +58,6 @@ stages:
     outs:
     - path: plots/
       hash: md5
-      md5: 3de050445d20ef6a03bf6d853021ad57.dir
-      size: 2573428
-      nfiles: 7
+      md5: 1e63d00fa5710cd3693b209f3d220bc2.dir
+      size: 1395115
+      nfiles: 6

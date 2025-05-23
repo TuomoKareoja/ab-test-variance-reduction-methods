@@ -133,7 +133,7 @@ if len(data_frames) > 0:
             x="estimate_error",
             hue="method",
             fill=False,
-            alpha=0.3,
+            alpha=0.6,
             common_norm=False,
             palette="husl",
         )
@@ -177,15 +177,6 @@ if len(data_frames) > 0:
                     "husl", len(combined_df["method"].unique())
                 )[method_idx]
 
-                # Add vertical line at mean
-                g.axes[ax_idx].axvline(
-                    x=mean_error,
-                    color=method_color,
-                    linestyle="-",
-                    alpha=0.7,
-                    linewidth=2,
-                )
-
                 # Add mean annotation
                 text_y = 0.95 - (method_idx * 0.05)  # Stack annotations
                 g.axes[ax_idx].text(
@@ -216,100 +207,8 @@ if len(data_frames) > 0:
         plt.close()
         logger.info(f"Saved error distribution facet plot to {output_path}")
 
-        # Create additional 2x2 grid with more detailed stats
-        fig, axes = plt.subplots(2, 2, figsize=(16, 16))
-        fig.suptitle("Method Comparison by Scenario", fontsize=20)
 
-        # Flatten axes for easier indexing
-        axes = axes.flatten()
-
-        for i, scenario in enumerate(available_scenarios):
-            if i < len(axes):
-                ax = axes[i]
-                scenario_df = data_frames[scenario]
-
-                # Create a table of statistics
-                stats_data = []
-                for method in scenario_df["method"].unique():
-                    method_data = scenario_df[scenario_df["method"] == method]
-                    error = method_data["estimate_error"]
-                    stats = {
-                        "Method": method,
-                        "Mean": error.mean(),
-                        "Std": error.std(),
-                        "Bias": error.mean(),  # Bias is the mean error
-                        "MSE": (error**2).mean(),  # Mean squared error
-                        "% in CI": (
-                            (method_data["true_effect"] >= method_data["ci_lower"])
-                            & (method_data["true_effect"] <= method_data["ci_upper"])
-                        ).mean()
-                        * 100,  # Percentage of true effects within CI
-                    }
-                    stats_data.append(stats)
-
-                # Sort by MSE (lower is better)
-                stats_df = pd.DataFrame(stats_data).sort_values("MSE")
-
-                # Plot error distributions
-                for j, method in enumerate(stats_df["Method"]):
-                    method_data = scenario_df[scenario_df["method"] == method]
-                    method_idx = combined_df["method"].unique().tolist().index(method)
-                    method_color = sns.color_palette(
-                        "husl", len(combined_df["method"].unique())
-                    )[method_idx]
-
-                    sns.kdeplot(
-                        data=method_data,
-                        x="estimate_error",
-                        ax=ax,
-                        label=method,
-                        color=method_color,
-                        fill=True,
-                        alpha=0.2,
-                    )
-
-                # Add a vertical line at zero
-                ax.axvline(x=0, color="r", linestyle="--", alpha=0.5)
-
-                # Add textual stats table in the corner of the plot
-                cell_text = []
-                for _, row in stats_df.iterrows():
-                    cell_text.append(
-                        [
-                            row["Method"],
-                            f"{row['Mean']:.4f}",
-                            f"{row['Std']:.4f}",
-                            f"{row['MSE']:.4f}",
-                            f"{row['% in CI']:.1f}%",
-                        ]
-                    )
-
-                # Create table at bottom right
-                table = ax.table(
-                    cellText=cell_text,
-                    colLabels=["Method", "Mean", "Std", "MSE", "CI Coverage"],
-                    loc="upper right",
-                    bbox=[0.35, 0.45, 0.6, 0.45],
-                    cellLoc="center",
-                )
-                table.auto_set_font_size(False)
-                table.set_fontsize(8)
-                table.scale(1, 1.5)
-
-                # Set title and labels
-                ax.set_title(scenario.replace("_", " ").title(), fontsize=16)
-                ax.set_xlabel("Estimate Error", fontsize=12)
-                ax.set_ylabel("Density", fontsize=12)
-                ax.legend(loc="upper left")
-
-        # Adjust spacing
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-        # Save the detailed stats plot
-        output_path = os.path.join("plots", "method_comparison_stats.png")
-        plt.savefig(output_path, dpi=300, bbox_inches="tight")
-        plt.close()
-        logger.info(f"Saved method comparison stats plot to {output_path}")
+# %%
 
 logger.info("Plotting completed successfully")
 
