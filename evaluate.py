@@ -65,6 +65,32 @@ scenario_config = [
         ],
         "output_path": os.path.join("results", "pre_and_post.parquet"),
     },
+    {
+        "scenario_name": "covariate",
+        "data": df_covariate,
+        "experiments": df_covariate["experiment_number"].max() + 1,
+        "methods": [
+            t_test,
+            t_test_on_change,
+            autoregression,
+            diff_in_diff,
+            cuped,
+        ],
+        "output_path": os.path.join("results", "covariate.parquet"),
+    },
+    {
+        "scenario_name": "selection_bias",
+        "data": df_selection_bias,
+        "experiments": df_selection_bias["experiment_number"].max() + 1,
+        "methods": [
+            t_test,
+            t_test_on_change,
+            autoregression,
+            diff_in_diff,
+            cuped,
+        ],
+        "output_path": os.path.join("results", "selection_bias.parquet"),
+    },
 ]
 
 # %%
