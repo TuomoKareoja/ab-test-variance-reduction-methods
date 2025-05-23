@@ -71,16 +71,17 @@ def cuped(df, covariate=False):
     """
 
     if covariate:
-        theta = smf.ols("post_experiment ~ pre_experiment + covariate", data=df).fit()
+        thetas = smf.ols("post_experiment ~ pre_experiment + covariate", data=df).fit()[
+            "params"
+        ]
 
         model = smf.ols(
             "post_experiment_cuped ~ is_treatment",
             data=df.assign(
                 post_experiment_cuped=df["post_experiment"]
-                - theta.params["pre_experiment"]
+                - thetas["pre_experiment"]
                 * (df["pre_experiment"] - np.mean(df["pre_experiment"]))
-                - theta.params["covariate"]
-                * (df["covariate"] - np.mean(df["covariate"])),
+                - thetas["covariate"] * (df["covariate"] - np.mean(df["covariate"])),
             ),
         ).fit()
 
