@@ -105,3 +105,4 @@ results/*.parquet
 plots/*.png
 /results
 /experiments
+/plots

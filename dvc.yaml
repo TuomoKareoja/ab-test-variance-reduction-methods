@@ -17,3 +17,11 @@ stages:
       - experiments/
     outs:
       - results/
+      
+  generate_plots:
+    cmd: python plot.py
+    deps:
+      - plot.py
+      - results/
+    outs:
+      - plots/
