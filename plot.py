@@ -17,7 +17,6 @@ logger.info("Starting plotting script")
 
 # Load all result files
 scenario_files = {
-    "post_only": "post_only.parquet",
     "pre_and_post": "pre_and_post.parquet",
     "covariate": "covariate.parquet",
     "selection_bias": "selection_bias.parquet",
@@ -80,122 +79,128 @@ if len(data_frames) > 1:
     # Combine all data frames
     combined_df = pd.concat(data_frames.values())
 
-    # Create a faceted boxplot
-    plt.figure(figsize=(18, 12))
-    g = sns.FacetGrid(combined_df, col="scenario", col_wrap=2, height=6)
-    g.map_dataframe(sns.boxplot, x="estimate_error", y="method", orient="h")
+    # Get available scenarios in order
+    scenario_order = ["pre_and_post", "covariate", "selection_bias"]
+    available_scenarios = [s for s in scenario_order if s in data_frames]
 
-    # Add a vertical line at zero for each subplot
-    for ax in g.axes.flat:
-        ax.axvline(x=0, color="r", linestyle="--", alpha=0.5)
-        ax.set_xlabel("Estimate Error (Estimate - True Effect)")
-        ax.set_ylabel("Method")
+    # Create subplots in a single row
+    fig, axes = plt.subplots(
+        1,
+        len(available_scenarios),
+        figsize=(6 * len(available_scenarios), 6),
+        sharey=True,
+    )
+    if len(available_scenarios) == 1:
+        axes = [axes]  # Make it iterable for single subplot
 
-    # Adjust title and layout
-    g.fig.suptitle("Estimate Error by Method Across Scenarios", size=16)
-    g.fig.tight_layout(rect=[0, 0, 1, 0.97])
+    for i, scenario in enumerate(available_scenarios):
+        scenario_df = data_frames[scenario]
+
+        # Create boxplot for this scenario
+        sns.boxplot(
+            data=scenario_df, x="estimate_error", y="method", orient="h", ax=axes[i]
+        )
+
+        # Add vertical line at zero
+        axes[i].axvline(x=0, color="r", linestyle="--", alpha=0.5)
+
+        # Set titles and labels
+        axes[i].set_title(scenario.replace("_", " ").title())
+        axes[i].set_xlabel("Estimate Error (Estimate - True Effect)")
+        if i == 0:
+            axes[i].set_ylabel("Method")
+        else:
+            axes[i].set_ylabel("")
+
+    # Add main title
+    fig.suptitle("Estimate Error by Method Across Scenarios", size=16)
+    plt.tight_layout()
 
     # Save the plot
     output_path = os.path.join("plots", "combined_error_boxplot.png")
-    g.fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
     logger.info(f"Saved combined plot to {output_path}")
 
 # %%
 
-# Create KDE plot of errors in 2x2 grid with methods overlapping
+# Create KDE plot of errors in single row with methods overlapping
 if len(data_frames) > 0:
-    logger.info("Creating KDE error distribution plot with FacetGrid")
+    logger.info("Creating KDE error distribution plot with subplots")
 
     # Combine all data frames
     combined_df = pd.concat(data_frames.values())
 
-    # Get unique scenarios
-    scenarios = ["post_only", "pre_and_post", "covariate", "selection_bias"]
-    available_scenarios = [s for s in scenarios if s in data_frames]
+    # Get available scenarios in order
+    scenario_order = ["pre_and_post", "covariate", "selection_bias"]
+    available_scenarios = [s for s in scenario_order if s in data_frames]
 
     if available_scenarios:
-        # Create a 2x2 FacetGrid
-        g = sns.FacetGrid(
-            combined_df,
-            col="scenario",
-            col_order=scenarios,
-            col_wrap=2,
-            height=7,
-            aspect=1.2,
-            sharex=True,
+        # Create subplots in a single row
+        fig, axes = plt.subplots(
+            1,
+            len(available_scenarios),
+            figsize=(7 * len(available_scenarios), 6),
+            sharex=False,
             sharey=True,
         )
+        if len(available_scenarios) == 1:
+            axes = [axes]  # Make it iterable for single subplot
 
-        # Plot KDE for each method within each scenario facet
-        g.map_dataframe(
-            sns.kdeplot,
-            x="estimate_error",
-            hue="method",
-            fill=False,
-            alpha=0.6,
-            common_norm=False,
-            palette="husl",
-        )
+        # Get all unique methods for consistent colors
+        all_methods = combined_df["method"].unique()
+        colors = sns.color_palette("husl", len(all_methods))
+        method_colors = dict(zip(all_methods, colors))
 
-        # Add a vertical line at zero for each subplot
-        for ax in g.axes.flat:
-            ax.axvline(x=0, color="r", linestyle="--", alpha=0.7)
-
-            # Set more readable scenario title
-            col_var = ax.get_title().split(" = ")[1]
-            ax.set_title(col_var.replace("'", "").replace("_", " ").title())
-
-            # Add legend with mean values
-            if ax.get_legend():
-                ax.get_legend().remove()
-
-        # Add a common legend at the bottom
-        g.add_legend(
-            title="Method", bbox_to_anchor=(0.5, -0.05), loc="upper center", ncol=3
-        )
-
-        # Set axis labels
-        g.set_axis_labels("Estimate Error", "Density")
-
-        # Add method means as vertical lines
-        for scenario in available_scenarios:
+        for i, scenario in enumerate(available_scenarios):
             scenario_df = data_frames[scenario]
-            ax_idx = (
-                scenarios.index(scenario)
-                if scenarios.index(scenario) < len(g.axes)
-                else 0
-            )
 
+            # Plot KDE for each method in this scenario
             for method in scenario_df["method"].unique():
+                method_data = scenario_df[scenario_df["method"] == method]
+                sns.kdeplot(
+                    data=method_data,
+                    x="estimate_error",
+                    label=method,
+                    fill=False,
+                    alpha=0.7,
+                    color=method_colors[method],
+                    ax=axes[i],
+                )
+
+            # Add vertical line at zero
+            axes[i].axvline(x=0, color="r", linestyle="--", alpha=0.7)
+
+            # Set titles and labels
+            axes[i].set_title(scenario.replace("_", " ").title())
+            axes[i].set_xlabel("Estimate Error")
+            if i == 0:
+                axes[i].set_ylabel("Density")
+            else:
+                axes[i].set_ylabel("")
+
+            # Add method mean annotations
+            for j, method in enumerate(scenario_df["method"].unique()):
                 method_data = scenario_df[scenario_df["method"] == method]
                 mean_error = method_data["estimate_error"].mean()
 
-                # Get the color from the current palette
-                method_idx = combined_df["method"].unique().tolist().index(method)
-                method_color = sns.color_palette(
-                    "husl", len(combined_df["method"].unique())
-                )[method_idx]
-
                 # Add mean annotation
-                text_y = 0.95 - (method_idx * 0.05)  # Stack annotations
-                g.axes[ax_idx].text(
+                text_y = 0.95 - (j * 0.05)
+                axes[i].text(
                     0.95,
                     text_y,
                     f"{method}: μ={mean_error:.4f}",
-                    transform=g.axes[ax_idx].transAxes,
+                    transform=axes[i].transAxes,
                     ha="right",
                     va="top",
                     bbox=dict(facecolor="white", alpha=0.7),
-                    color=method_color,
+                    color=method_colors[method],
                     fontsize=9,
                 )
 
         # Add main title
-        plt.suptitle(
-            "Error Distributions by Scenario with Method Comparison",
-            fontsize=16,
-            y=1.02,
+        fig.suptitle(
+            "Error Distributions by Scenario with Method Comparison", fontsize=16
         )
 
         # Adjust spacing
