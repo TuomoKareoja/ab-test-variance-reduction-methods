@@ -3,12 +3,15 @@ import numpy as np
 import statsmodels.formula.api as smf
 
 
-def t_test(df):
+def t_test(df, covariate=False):
     """
-    Perform a t-test on the post-experiment data.
+    Perform a t-test on the post-experiment data with or without a covariate.
     """
 
-    model = smf.ols("post_experiment ~ is_treatment", data=df).fit()
+    model_formula = "post_experiment ~ is_treatment"
+    if covariate:
+        model_formula += f" + covariate"
+    model = smf.ols(model_formula, data=df).fit()
     p_value = model.pvalues["is_treatment"]
     estimate = model.params["is_treatment"]
     ci = model.conf_int().iloc[1].values
@@ -21,12 +24,15 @@ def t_test(df):
     }
 
 
-def t_test_on_change(df):
+def t_test_on_change(df, covariate=False):
     """
-    Perform a t-test on the change in post-experiment data.
+    Perform a t-test on the change in post-experiment data with or without a covariate.
     """
 
-    model = smf.ols("change ~ is_treatment", data=df).fit()
+    model_formula = "change ~ is_treatment"
+    if covariate:
+        model_formula += f" + covariate"
+    model = smf.ols(model_formula, data=df).fit()
     p_value = model.pvalues["is_treatment"]
     estimate = model.params["is_treatment"]
     ci = model.conf_int().iloc[1].values
@@ -39,12 +45,15 @@ def t_test_on_change(df):
     }
 
 
-def autoregression(df):
+def autoregression(df, covariate=False):
     """
-    Perform an old value adjusted t-test on the post-experiment data.
+    Perform an old value adjusted t-test on the post-experiment data with or without a covariate.
     """
 
-    model = smf.ols("post_experiment ~ pre_experiment + is_treatment", data=df).fit()
+    model_formula = "post_experiment ~ pre_experiment + is_treatment"
+    if covariate:
+        model_formula += f" + covariate"
+    model = smf.ols(model_formula, data=df).fit()
     p_value = model.pvalues["is_treatment"]
     estimate = model.params["is_treatment"]
     ci = model.conf_int().iloc[1].values
@@ -56,24 +65,40 @@ def autoregression(df):
     }
 
 
-def cuped(df):
+def cuped(df, covariate=False):
     """
     Perform a t-test on the CUPED adjusted post-experiment data.
     """
 
-    theta = (
-        smf.ols("post_experiment ~ pre_experiment", data=df)
-        .fit()
-        .params["pre_experiment"]
-    )
+    if covariate:
+        theta = smf.ols("post_experiment ~ pre_experiment + covariate", data=df).fit()
 
-    model = smf.ols(
-        "post_experiment_cuped ~ is_treatment",
-        data=df.assign(
-            post_experiment_cuped=df["post_experiment"]
-            - theta * (df["pre_experiment"] - np.mean(df["pre_experiment"]))
-        ),
-    ).fit()
+        model = smf.ols(
+            "post_experiment_cuped ~ is_treatment",
+            data=df.assign(
+                post_experiment_cuped=df["post_experiment"]
+                - theta.params["pre_experiment"]
+                * (df["pre_experiment"] - np.mean(df["pre_experiment"]))
+                - theta.params["covariate"]
+                * (df["covariate"] - np.mean(df["covariate"])),
+            ),
+        ).fit()
+
+    else:
+        theta = (
+            smf.ols("post_experiment ~ pre_experiment", data=df)
+            .fit()
+            .params["pre_experiment"]
+        )
+
+        model = smf.ols(
+            "post_experiment_cuped ~ is_treatment",
+            data=df.assign(
+                post_experiment_cuped=df["post_experiment"]
+                - theta * (df["pre_experiment"] - np.mean(df["pre_experiment"]))
+            ),
+        ).fit()
+
     p_value = model.pvalues["is_treatment"]
     estimate = model.params["is_treatment"]
     ci = model.conf_int().iloc[1].values
@@ -85,7 +110,7 @@ def cuped(df):
     }
 
 
-def diff_in_diff(df):
+def diff_in_diff(df, covariate=False):
     """
     Perform a difference-in-differences t-test on the post-experiment data.
     """
@@ -114,9 +139,18 @@ def diff_in_diff(df):
         ignore_index=True,
     )
 
+    formula = "target ~ time * is_treatment"
+
+    if covariate:
+        # Add the covariate to the long format dataframe
+        df_long["covariate"] = np.repeat(df["covariate"], 2)
+
+        # Fit the model with the covariate
+        formula += " + covariate"
+
     # NOTE: Adjusting the model to take into account that the observations from the
     # same participant are not independent (this reduces the standard errors)
-    model = smf.ols("target ~ time * is_treatment", data=df_long).fit(
+    model = smf.ols(formula, data=df_long).fit(
         cov_type="cluster", cov_kwds={"groups": df_long["participant"]}
     )
     p_value = model.pvalues["time:is_treatment"]
