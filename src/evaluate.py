@@ -58,7 +58,7 @@ def autoregression(df):
 
 def cuped(df):
     """
-    Perform a CUPED t-test on the post-experiment data.
+    Perform a t-test on the CUPED adjusted post-experiment data.
     """
 
     theta = (
