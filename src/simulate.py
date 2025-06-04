@@ -40,10 +40,10 @@ def simulate_experiments_batch(experiment_numbers, config, params):
     np.random.seed(experiment_numbers[0])  # Use first experiment number as base seed
 
     # Generate all random numbers at once
-    pre_experiment_all = np.random.normal(
-        target_pre_experiment_mean, target_std, size=total_samples
-    )
+
+    pre_experiment_noise = np.random.normal(0, target_std, size=total_samples)
     post_noise_all = np.random.normal(0, target_std, size=total_samples)
+    pre_experiment_all = target_pre_experiment_mean + pre_experiment_noise
     treatment_rand_all = np.random.rand(total_samples)
 
     covariate_all = None
