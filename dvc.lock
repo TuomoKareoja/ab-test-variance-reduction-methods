@@ -5,7 +5,7 @@ stages:
     deps:
     - path: params.yml
       hash: md5
-      md5: 11b54c118c78dbc5b1edfd01a9443acb
+      md5: 5a2d51a128ddcc7059d87179d92ed673
       size: 461
     - path: simulate.py
       hash: md5
@@ -18,8 +18,8 @@ stages:
     outs:
     - path: experiments/
       hash: md5
-      md5: bed9ecc315b81a7c324d3e961e64d7f3.dir
-      size: 11217923
+      md5: a085c8c1368763acf0bd9baf5dced4b1.dir
+      size: 11217961
       nfiles: 3
   evaluate_methods:
     cmd: python evaluate.py
@@ -30,8 +30,8 @@ stages:
       size: 4929
     - path: experiments/
       hash: md5
-      md5: bed9ecc315b81a7c324d3e961e64d7f3.dir
-      size: 11217923
+      md5: a085c8c1368763acf0bd9baf5dced4b1.dir
+      size: 11217961
       nfiles: 3
     - path: src/evaluate.py
       hash: md5
@@ -40,8 +40,8 @@ stages:
     outs:
     - path: results/
       hash: md5
-      md5: 6718d847dcf3dee979674cef9344d671.dir
-      size: 805724
+      md5: a1d4a0c8e100f597c0f0dbd02f5ae903.dir
+      size: 805726
       nfiles: 3
   generate_plots:
     cmd: python plot.py
@@ -52,12 +52,12 @@ stages:
       size: 6887
     - path: results/
       hash: md5
-      md5: 6718d847dcf3dee979674cef9344d671.dir
-      size: 805724
+      md5: a1d4a0c8e100f597c0f0dbd02f5ae903.dir
+      size: 805726
       nfiles: 3
     outs:
     - path: plots/
       hash: md5
-      md5: 4dc0f1d61324a728ad080a9b00dc8dc3.dir
-      size: 1375245
+      md5: 95ead0645f527dfa1a3ad8979eaa491c.dir
+      size: 1291330
       nfiles: 5

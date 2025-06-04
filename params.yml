@@ -1,6 +1,6 @@
 n: 100
 experiments: 1000
-true_effect: 1
+true_effect: 5
 target_pre_experiment_mean: 10
 target_std: 0.5
 # how much noise there is in the pre-experiment and post-experiment values
