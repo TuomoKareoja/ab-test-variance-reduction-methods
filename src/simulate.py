@@ -15,6 +15,7 @@ def simulate_experiments_batch(experiment_numbers, config, params):
     true_effect = params["true_effect"]
     target_pre_experiment_mean = params["target_pre_experiment_mean"]
     target_std = params["target_std"]
+    noise_std = params["noise_std"]
     has_covariate = config["has_covariate"]
     has_selection_bias = config["has_selection_bias"]
 
@@ -41,9 +42,11 @@ def simulate_experiments_batch(experiment_numbers, config, params):
 
     # Generate all random numbers at once
 
-    pre_experiment_noise = np.random.normal(0, target_std, size=total_samples)
-    post_noise_all = np.random.normal(0, target_std, size=total_samples)
-    pre_experiment_all = target_pre_experiment_mean + pre_experiment_noise
+    pre_experiment_all = np.random.normal(
+        target_pre_experiment_mean, target_std, size=total_samples
+    )
+    pre_noise_all = np.random.normal(0, noise_std, size=total_samples)
+    post_noise_all = np.random.normal(0, noise_std, size=total_samples)
     treatment_rand_all = np.random.rand(total_samples)
 
     covariate_all = None
@@ -64,6 +67,7 @@ def simulate_experiments_batch(experiment_numbers, config, params):
 
         # Extract slices for this experiment
         pre_experiment = pre_experiment_all[start_idx:end_idx]
+        pre_noise = pre_noise_all[start_idx:end_idx]
         post_noise = post_noise_all[start_idx:end_idx]
         treatment_rand = treatment_rand_all[start_idx:end_idx]
 
@@ -81,21 +85,17 @@ def simulate_experiments_batch(experiment_numbers, config, params):
                 selection_impact = covariate * covariate_selection_bias
 
         is_treatment = (treatment_rand < 0.5 + selection_impact).astype(np.int32)
-        # NOTE: we are not using the pre-experiment values but their mean because
-        # we don't want the noise in pre-experiment to be cumulative to the post-experiment.
-        # Post-experiment has its own noise.
         post_experiment = (
-            target_pre_experiment_mean
-            + true_effect * is_treatment
-            + covariate * covariate_effect
-            + post_noise
+            pre_experiment + true_effect * is_treatment + covariate * covariate_effect
         )
 
         # Fill structured array
         data_array["experiment_number"][start_idx:end_idx] = exp_num
-        data_array["pre_experiment"][start_idx:end_idx] = pre_experiment
-        data_array["post_experiment"][start_idx:end_idx] = post_experiment
-        data_array["change"][start_idx:end_idx] = post_experiment - pre_experiment
+        data_array["pre_experiment"][start_idx:end_idx] = pre_experiment + pre_noise
+        data_array["post_experiment"][start_idx:end_idx] = post_experiment + post_noise
+        data_array["change"][start_idx:end_idx] = (post_experiment + post_noise) - (
+            pre_experiment + pre_noise
+        )
         data_array["is_treatment"][start_idx:end_idx] = is_treatment
         data_array["true_effect"][start_idx:end_idx] = true_effect
 
