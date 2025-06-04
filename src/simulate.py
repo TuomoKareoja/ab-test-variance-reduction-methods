@@ -81,8 +81,11 @@ def simulate_experiments_batch(experiment_numbers, config, params):
                 selection_impact = covariate * covariate_selection_bias
 
         is_treatment = (treatment_rand < 0.5 + selection_impact).astype(np.int32)
+        # NOTE: we are not using the pre-experiment values but their mean because
+        # we don't want the noise in pre-experiment to be cumulative to the post-experiment.
+        # Post-experiment has its own noise.
         post_experiment = (
-            pre_experiment
+            target_pre_experiment_mean
             + true_effect * is_treatment
             + covariate * covariate_effect
             + post_noise
