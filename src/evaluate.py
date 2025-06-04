@@ -57,40 +57,13 @@ def autoregression(df, covariate=False):
     return extract_treatment_results(model)
 
 
-def _calculate_cuped_adjustment(df, covariate=False):
-    """
-    Calculate CUPED adjustment for the post-experiment values.
-    """
-    # Cache means to avoid recalculation
-    pre_mean = np.mean(df["pre_experiment"])
-
-    if covariate:
-        thetas = (
-            smf.ols("post_experiment ~ pre_experiment + covariate", data=df)
-            .fit()
-            .params
-        )
-        cov_mean = np.mean(df["covariate"])
-
-        adjustment = thetas["pre_experiment"] * (
-            df["pre_experiment"] - pre_mean
-        ) + thetas["covariate"] * (df["covariate"] - cov_mean)
-    else:
-        theta = (
-            smf.ols("post_experiment ~ pre_experiment", data=df)
-            .fit()
-            .params["pre_experiment"]
-        )
-        adjustment = theta * (df["pre_experiment"] - pre_mean)
-
-    return df["post_experiment"] - adjustment
-
-
 def cuped(df, covariate=False):
     """
     Perform a t-test on the CUPED adjusted post-experiment data.
     """
-    cuped_values = _calculate_cuped_adjustment(df, covariate)
+    formula = build_formula("post_experiment ~ pre_experiment", covariate)
+    model = smf.ols(formula, data=df).fit()
+    cuped_values = model.resid + np.mean(df["post_experiment"])
     model = smf.ols(
         "post_experiment_cuped ~ is_treatment",
         data=df.assign(post_experiment_cuped=cuped_values),
