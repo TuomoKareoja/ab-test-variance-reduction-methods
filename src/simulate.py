@@ -103,16 +103,3 @@ def simulate_experiments_batch(experiment_numbers, config, params):
             data_array["covariate"][start_idx:end_idx] = covariate
 
     return data_array
-
-
-def simulate_experiment(seed, has_covariate, has_selection_bias, params):
-    """
-    Legacy function for single experiment simulation - kept for compatibility.
-    """
-    config = {"has_covariate": has_covariate, "has_selection_bias": has_selection_bias}
-
-    data_array = simulate_experiments_batch([seed], config, params)
-
-    # Convert to DataFrame
-    df = pd.DataFrame(data_array)
-    return df
