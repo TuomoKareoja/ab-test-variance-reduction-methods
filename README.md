@@ -95,3 +95,10 @@ dvc repro
 ```
 
 This runs all the simulations and applies the methods for each of them. Outputs raw simulation data and estimates to `results` folder.
+
+### 3.4 Run tests
+
+```bash
+pytest
+```
+
