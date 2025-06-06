@@ -18,7 +18,7 @@ def extract_treatment_results(model):
     """
     p_value = model.pvalues["is_treatment"]
     estimate = model.params["is_treatment"]
-    ci = model.conf_int().iloc[1].values
+    ci = model.conf_int().loc["is_treatment"].values
 
     return {
         "p_value": p_value,
