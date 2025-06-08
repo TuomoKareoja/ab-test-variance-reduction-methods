@@ -35,6 +35,7 @@ dependencies:
   - ipykernel
 
   # Quality & testing
+  - pre_commit
   - pytest
   - ruff==0.11.2 # matches version used VScode extension
 
