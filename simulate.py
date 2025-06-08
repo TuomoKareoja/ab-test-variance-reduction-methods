@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from src.simulate import simulate_experiments_batch
+from src.simulate_helpers import simulate_experiments_batch
 
 # %%
 

@@ -8,9 +8,7 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-from src.evaluate import autoregression, cuped, diff_in_diff, evaluate_experiments_batch, t_test
-
-# import the analytical packages needed
+from src.evaluate_helpers import autoregression, cuped, diff_in_diff, evaluate_experiments_batch, t_test
 
 # Enable autoreload for Jupyter Notebook
 # %load_ext autoreload
