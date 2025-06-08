@@ -1,14 +1,16 @@
 # %%
 
-import os
-import pandas as pd
-import logging
-import dvc.api
-from src.simulate import simulate_experiments_batch
-from tqdm import tqdm
-import multiprocessing
 import concurrent.futures
+import logging
+import multiprocessing
+import os
+
+import dvc.api
 import numpy as np
+import pandas as pd
+from tqdm import tqdm
+
+from src.simulate import simulate_experiments_batch
 
 # %%
 
@@ -99,7 +101,9 @@ for config in simulation_configurations:
     # Convert to DataFrame only once at the end
     simulations_df = pd.DataFrame(combined_array)
 
-    output_path = os.path.join("experiments", f'{config["scenario_name"]}.parquet')
+    output_path = os.path.join("experiments", f"{config['scenario_name']}.parquet")
     simulations_df.to_parquet(output_path)
+
+# %%
 
 # %%

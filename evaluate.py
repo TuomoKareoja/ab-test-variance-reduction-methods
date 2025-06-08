@@ -1,19 +1,14 @@
 # %%
 
-import os
-import pandas as pd
-
-import logging
-from tqdm import tqdm
 import concurrent.futures
+import logging
 import multiprocessing
-from src.evaluate import (
-    t_test,
-    autoregression,
-    cuped,
-    diff_in_diff,
-    evaluate_experiments_batch,
-)
+import os
+
+import pandas as pd
+from tqdm import tqdm
+
+from src.evaluate import autoregression, cuped, diff_in_diff, evaluate_experiments_batch, t_test
 
 # import the analytical packages needed
 
@@ -33,9 +28,7 @@ logger.info("Starting evaluation script")
 # load in the experiment datasets
 df_no_covariate = pd.read_parquet(os.path.join("experiments", "no_covariate.parquet"))
 df_covariate = pd.read_parquet(os.path.join("experiments", "covariate.parquet"))
-df_selection_bias = pd.read_parquet(
-    os.path.join("experiments", "selection_bias.parquet")
-)
+df_selection_bias = pd.read_parquet(os.path.join("experiments", "selection_bias.parquet"))
 
 # %%
 
@@ -129,9 +122,7 @@ def run_scenario(config):
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = []
         for batch in experiment_batches:
-            future = executor.submit(
-                run_experiments_batch, (grouped_data, batch, config["methods"])
-            )
+            future = executor.submit(run_experiments_batch, (grouped_data, batch, config["methods"]))
             futures.append(future)
 
         for result in concurrent.futures.as_completed(futures):
@@ -147,9 +138,7 @@ def run_scenario(config):
 
 # Run scenarios in parallel for better performance
 with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-    scenario_futures = [
-        executor.submit(run_scenario, config) for config in scenario_config
-    ]
+    scenario_futures = [executor.submit(run_scenario, config) for config in scenario_config]
 
     for future in tqdm(
         concurrent.futures.as_completed(scenario_futures),
@@ -158,4 +147,5 @@ with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor
     ):
         future.result()  # Wait for completion
 
+# %%
 # %%

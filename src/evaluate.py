@@ -50,9 +50,7 @@ def autoregression(df, covariate=False):
     """
     Perform an old value adjusted t-test on the post-experiment data with or without a covariate.
     """
-    formula = build_formula(
-        "post_experiment ~ pre_experiment + is_treatment", covariate
-    )
+    formula = build_formula("post_experiment ~ pre_experiment + is_treatment", covariate)
     model = smf.ols(formula, data=df).fit()
     return extract_treatment_results(model)
 

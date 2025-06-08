@@ -1,10 +1,11 @@
 # %%
 
-import os
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import logging
+import os
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 # %%
 
@@ -97,9 +98,7 @@ if len(data_frames) > 1:
         scenario_df = data_frames[scenario]
 
         # Create boxplot for this scenario
-        sns.boxplot(
-            data=scenario_df, x="estimate_error", y="method", orient="h", ax=axes[i]
-        )
+        sns.boxplot(data=scenario_df, x="estimate_error", y="method", orient="h", ax=axes[i])
 
         # Add vertical line at zero
         axes[i].axvline(x=0, color="r", linestyle="--", alpha=0.5)
@@ -199,9 +198,7 @@ if len(data_frames) > 0:
                 )
 
         # Add main title
-        fig.suptitle(
-            "Error Distributions by Scenario with Method Comparison", fontsize=16
-        )
+        fig.suptitle("Error Distributions by Scenario with Method Comparison", fontsize=16)
 
         # Adjust spacing
         plt.tight_layout()
@@ -217,4 +214,5 @@ if len(data_frames) > 0:
 
 logger.info("Plotting completed successfully")
 
+# %%
 # %%

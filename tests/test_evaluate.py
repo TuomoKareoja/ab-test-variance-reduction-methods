@@ -1,9 +1,8 @@
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
-from src.evaluate import autoregression, t_test, diff_in_diff, cuped
-
+from src.evaluate import autoregression, cuped, diff_in_diff, t_test
 
 np.random.seed(0)
 n = 10000  # Large sample for accurate estimation

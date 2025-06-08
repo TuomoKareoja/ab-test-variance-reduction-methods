@@ -5,9 +5,9 @@ def simulate_experiments_batch(experiment_numbers, config, params):
     """
     Simulate multiple experiments in a vectorized batch for better performance.
     """
-    assert not (
-        config["has_selection_bias"] and not config["has_covariate"]
-    ), "Selection bias cannot be simulated without a covariate."
+    assert not (config["has_selection_bias"] and not config["has_covariate"]), (
+        "Selection bias cannot be simulated without a covariate."
+    )
 
     # Extract parameters
     n = params["n"]
@@ -41,9 +41,7 @@ def simulate_experiments_batch(experiment_numbers, config, params):
 
     # Generate all random numbers at once
 
-    pre_experiment_all = np.random.normal(
-        target_pre_experiment_mean, target_std, size=total_samples
-    )
+    pre_experiment_all = np.random.normal(target_pre_experiment_mean, target_std, size=total_samples)
     pre_noise_all = np.random.normal(0, noise_std, size=total_samples)
     post_noise_all = np.random.normal(0, noise_std, size=total_samples)
     treatment_rand_all = np.random.rand(total_samples)
@@ -52,9 +50,7 @@ def simulate_experiments_batch(experiment_numbers, config, params):
     if has_covariate:
         covariate_min = params["covariate_min"]
         covariate_max = params["covariate_max"]
-        covariate_all = np.random.uniform(
-            covariate_min, covariate_max, size=total_samples
-        )
+        covariate_all = np.random.uniform(covariate_min, covariate_max, size=total_samples)
 
     # Process each experiment's slice
     for i, exp_num in enumerate(experiment_numbers):
@@ -84,17 +80,13 @@ def simulate_experiments_batch(experiment_numbers, config, params):
                 selection_impact = covariate * covariate_selection_bias
 
         is_treatment = (treatment_rand < 0.5 + selection_impact).astype(np.int32)
-        post_experiment = (
-            pre_experiment + true_effect * is_treatment + covariate * covariate_effect
-        )
+        post_experiment = pre_experiment + true_effect * is_treatment + covariate * covariate_effect
 
         # Fill structured array
         data_array["experiment_number"][start_idx:end_idx] = exp_num
         data_array["pre_experiment"][start_idx:end_idx] = pre_experiment + pre_noise
         data_array["post_experiment"][start_idx:end_idx] = post_experiment + post_noise
-        data_array["change"][start_idx:end_idx] = (post_experiment + post_noise) - (
-            pre_experiment + pre_noise
-        )
+        data_array["change"][start_idx:end_idx] = (post_experiment + post_noise) - (pre_experiment + pre_noise)
         data_array["is_treatment"][start_idx:end_idx] = is_treatment
         data_array["true_effect"][start_idx:end_idx] = true_effect
 
