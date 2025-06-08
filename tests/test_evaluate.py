@@ -1,28 +1,68 @@
 import pytest
 import pandas as pd
 import numpy as np
-import statsmodels.formula.api as smf
 
 from src.evaluate import autoregression
+from src.evaluate import t_test
+from src.evaluate import diff_in_diff
+from src.evaluate import cuped
 
 
-def test_autoregression_confidence_interval_matches_statsmodels():
-    np.random.seed(0)
-    n = 20
-    df = pd.DataFrame({
-        "pre_experiment": np.random.normal(size=n),
-        "post_experiment": np.random.normal(size=n),
-        "is_treatment": [0, 1] * (n // 2),
-        "covariate": np.random.normal(size=n),
-    })
+np.random.seed(0)
+n = 10000  # Large sample for accurate estimation
+true_beta_pre = 0.5
+true_beta_treatment = 2.0
+true_beta_covariate = -1.0
+true_intercept = 3.0
 
-    # Results from library function
-    results = autoregression(df, covariate=True)
 
-    # Fit the same model directly
-    formula = "post_experiment ~ pre_experiment + is_treatment + covariate"
-    model = smf.ols(formula, data=df).fit()
-    ci = model.conf_int().loc["is_treatment"]
+def create_test_dataframe():
+    """
+    Create a test DataFrame
+    """
+    pre_experiment = np.random.normal(size=n)
+    is_treatment = np.random.binomial(1, 0.5, size=n)
+    covariate = np.random.normal(size=n)
+    noise = np.random.normal(scale=0.5, size=n)
 
-    assert results["ci_lower"] == pytest.approx(ci[0])
-    assert results["ci_upper"] == pytest.approx(ci[1])
+    post_experiment = (
+        true_intercept
+        + true_beta_pre * pre_experiment
+        + true_beta_treatment * is_treatment
+        + true_beta_covariate * covariate
+        + noise
+    )
+
+    return pd.DataFrame(
+        {
+            "pre_experiment": pre_experiment,
+            "post_experiment": post_experiment,
+            "change": post_experiment - pre_experiment,
+            "is_treatment": is_treatment,
+            "covariate": covariate,
+        }
+    )
+
+
+def evaluate_results(model):
+    df = create_test_dataframe()
+    results = model(df, covariate=True)
+
+    # The estimated effect should be close to the true parameter
+    assert results["estimate"] == pytest.approx(true_beta_treatment, abs=0.05)
+
+
+def test_t_test():
+    evaluate_results(t_test)
+
+
+def test_diff_in_diff():
+    evaluate_results(diff_in_diff)
+
+
+def test_autoregression():
+    evaluate_results(autoregression)
+
+
+def test_cuped():
+    evaluate_results(cuped)
