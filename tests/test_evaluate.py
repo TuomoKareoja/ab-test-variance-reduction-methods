@@ -2,10 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from src.evaluate import autoregression
-from src.evaluate import t_test
-from src.evaluate import diff_in_diff
-from src.evaluate import cuped
+from src.evaluate import autoregression, t_test, diff_in_diff, cuped
 
 
 np.random.seed(0)
